@@ -1,1 +1,58 @@
-package com.example.customerrouting.simulation; import org.springframework.beans.factory.annotation.*; import org.springframework.scheduling.*; import org.springframework.scheduling.annotation.*; import org.springframework.stereotype.*; import java.time.*; import java.util.concurrent.*; @Component public class SimulationScheduler { private final TaskScheduler scheduler; private final CustomerSimulationService customers; private final SimulationCompletionService completion; private final SimulationProperties p; private volatile boolean running; public SimulationScheduler(@Qualifier("simulationTaskScheduler") TaskScheduler s,CustomerSimulationService c,SimulationCompletionService x,SimulationProperties p){scheduler=s;customers=c;completion=x;this.p=p;} public synchronized void start(){if(!p.isEnabled()||running)return;running=true;scheduleNext();} public synchronized void stop(){running=false;} public boolean running(){return running;} private void scheduleNext(){if(!running)return;long min=p.getTraffic().getMinArrivalIntervalMs(),max=p.getTraffic().getMaxArrivalIntervalMs();long delay=ThreadLocalRandom.current().nextLong(min,max+1);scheduler.schedule(()->{if(running)customers.create();scheduleNext();},Instant.now().plusMillis(delay));} @Scheduled(fixedDelay=1000) public void due(){completion.completeDue();completion.reconcileAll();} }
+package com.example.customerrouting.simulation;
+
+import org.springframework.beans.factory.annotation.*;
+import org.springframework.scheduling.*;
+import org.springframework.scheduling.annotation.*;
+import org.springframework.stereotype.*;
+import java.time.*;
+import java.util.concurrent.*;
+
+@Component
+public class SimulationScheduler {
+    private final TaskScheduler scheduler;
+    private final CustomerSimulationService customers;
+    private final SimulationCompletionService completion;
+    private final SimulationProperties p;
+    private volatile boolean running;
+
+    public SimulationScheduler(@Qualifier("simulationTaskScheduler") TaskScheduler s, CustomerSimulationService c,
+            SimulationCompletionService x, SimulationProperties p) {
+        scheduler = s;
+        customers = c;
+        completion = x;
+        this.p = p;
+    }
+
+    public synchronized void start() {
+        if (!p.isEnabled() || running)
+            return;
+        running = true;
+        scheduleNext();
+    }
+
+    public synchronized void stop() {
+        running = false;
+    }
+
+    public boolean running() {
+        return running;
+    }
+
+    private void scheduleNext() {
+        if (!running)
+            return;
+        long min = p.getTraffic().getMinArrivalIntervalMs(), max = p.getTraffic().getMaxArrivalIntervalMs();
+        long delay = ThreadLocalRandom.current().nextLong(min, max + 1);
+        scheduler.schedule(() -> {
+            if (running)
+                customers.create();
+            scheduleNext();
+        }, Instant.now().plusMillis(delay));
+    }
+
+    @Scheduled(fixedDelay = 1000)
+    public void due() {
+        completion.completeDue();
+        completion.reconcileAll();
+    }
+}

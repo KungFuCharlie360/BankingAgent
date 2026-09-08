@@ -1,1 +1,41 @@
-package com.example.customerrouting.routing; import com.example.customerrouting.skill.Skill; import org.junit.jupiter.api.*; import java.util.*; import static org.junit.jupiter.api.Assertions.*; class SkillMatcherTest { SkillMatcher matcher=new SkillMatcher(); private List<Skill> skills(String...codes){return Arrays.stream(codes).map(c->new Skill(c,c)).toList();} @Test void fullContainment(){assertEquals(1d,matcher.containment(Set.of("A","B"),skills("A","B")));} @Test void eightyPercentQualifies(){double s=matcher.containment(Set.of("A","B","C","D","E"),skills("A","B","C","D"));assertEquals(.8d,s);assertTrue(matcher.qualifies(s));} @Test void belowThresholdDoesNotQualify(){assertFalse(matcher.qualifies(matcher.containment(Set.of("A","B","C"),skills("A","B"))));} @Test void extraSkillsDoNotReduceScore(){assertEquals(1d,matcher.containment(Set.of("A","B"),skills("A","B","C")));} @Test void emptyRequiredIsSafe(){assertEquals(0d,matcher.containment(Set.of(),skills("A")));} }
+package com.example.customerrouting.routing;
+
+import com.example.customerrouting.skill.Skill;
+import org.junit.jupiter.api.*;
+import java.util.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+class SkillMatcherTest {
+    SkillMatcher matcher = new SkillMatcher();
+
+    private List<Skill> skills(String... codes) {
+        return Arrays.stream(codes).map(c -> new Skill(c, c)).toList();
+    }
+
+    @Test
+    void fullContainment() {
+        assertEquals(1d, matcher.containment(Set.of("A", "B"), skills("A", "B")));
+    }
+
+    @Test
+    void eightyPercentQualifies() {
+        double s = matcher.containment(Set.of("A", "B", "C", "D", "E"), skills("A", "B", "C", "D"));
+        assertEquals(.8d, s);
+        assertTrue(matcher.qualifies(s));
+    }
+
+    @Test
+    void belowThresholdDoesNotQualify() {
+        assertFalse(matcher.qualifies(matcher.containment(Set.of("A", "B", "C"), skills("A", "B"))));
+    }
+
+    @Test
+    void extraSkillsDoNotReduceScore() {
+        assertEquals(1d, matcher.containment(Set.of("A", "B"), skills("A", "B", "C")));
+    }
+
+    @Test
+    void emptyRequiredIsSafe() {
+        assertEquals(0d, matcher.containment(Set.of(), skills("A")));
+    }
+}

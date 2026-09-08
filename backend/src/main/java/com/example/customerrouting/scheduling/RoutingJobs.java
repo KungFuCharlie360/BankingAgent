@@ -1,1 +1,48 @@
-package com.example.customerrouting.scheduling; import com.example.customerrouting.agent.*; import com.example.customerrouting.enquiry.*; import com.example.customerrouting.routing.*; import org.springframework.scheduling.annotation.*; import org.springframework.stereotype.*; import java.time.*; import java.util.*; @Component public class RoutingJobs { private final PendingEnquiryService pending; private final EnquiryRepository enquiries; private final EnquiryService service; private final AgentRepository agents; public RoutingJobs(PendingEnquiryService p,EnquiryRepository e,EnquiryService s,AgentRepository a){pending=p;enquiries=e;service=s;agents=a;} @Scheduled(fixedDelayString="${routing.pending-retry-ms:5000}") public void pending(){pending.retry();} @Scheduled(fixedDelay=60000) public void inactive(){enquiries.findByStatusInAndLastCustomerActivityAtBefore(List.of(EnquiryStatus.ASSIGNED,EnquiryStatus.ACTIVE),Instant.now().minus(Duration.ofMinutes(30))).forEach(e->service.close(e.getId(),"INACTIVITY"));} @Scheduled(fixedDelay=60000) public void offline(){Instant cutoff=Instant.now().minus(Duration.ofMinutes(10));agents.findByStatus(AgentStatus.OFFLINE).stream().filter(a->a.getLastHeartbeatAt()==null||a.getLastHeartbeatAt().isBefore(cutoff)).forEach(a->enquiries.findByAssignedAgentIdAndStatusIn(a.getId(),List.of(EnquiryStatus.ASSIGNED,EnquiryStatus.ACTIVE)).forEach(e->service.unassignForOffline(e.getId(),"AGENT_OFFLINE")));} }
+package com.example.customerrouting.scheduling;
+
+import com.example.customerrouting.agent.*;
+import com.example.customerrouting.enquiry.*;
+import com.example.customerrouting.routing.*;
+import org.springframework.scheduling.annotation.*;
+import org.springframework.stereotype.*;
+import java.time.*;
+import java.util.*;
+
+@Component
+public class RoutingJobs {
+    private final PendingEnquiryService pending;
+    private final EnquiryRepository enquiries;
+    private final EnquiryService service;
+    private final AgentRepository agents;
+
+    public RoutingJobs(PendingEnquiryService p, EnquiryRepository e, EnquiryService s, AgentRepository a) {
+        pending = p;
+        enquiries = e;
+        service = s;
+        agents = a;
+    }
+
+    @Scheduled(fixedDelayString = "${routing.pending-retry-ms:5000}")
+    public void pending() {
+        pending.retry();
+    }
+
+    @Scheduled(fixedDelay = 60000)
+    public void inactive() {
+        enquiries
+                .findByStatusInAndLastCustomerActivityAtBefore(List.of(EnquiryStatus.ASSIGNED, EnquiryStatus.ACTIVE),
+                        Instant.now().minus(Duration.ofMinutes(30)))
+                .forEach(e -> service.close(e.getId(), "INACTIVITY"));
+    }
+
+    @Scheduled(fixedDelay = 60000)
+    public void offline() {
+        Instant cutoff = Instant.now().minus(Duration.ofMinutes(10));
+        agents.findByStatus(AgentStatus.OFFLINE).stream()
+                .filter(a -> a.getLastHeartbeatAt() == null || a.getLastHeartbeatAt().isBefore(cutoff))
+                .forEach(a -> enquiries
+                        .findByAssignedAgentIdAndStatusIn(a.getId(),
+                                List.of(EnquiryStatus.ASSIGNED, EnquiryStatus.ACTIVE))
+                        .forEach(e -> service.unassignForOffline(e.getId(), "AGENT_OFFLINE")));
+    }
+}

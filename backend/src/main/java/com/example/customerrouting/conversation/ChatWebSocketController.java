@@ -1,1 +1,24 @@
-package com.example.customerrouting.conversation; import jakarta.validation.Valid; import jakarta.validation.constraints.*; import org.springframework.messaging.handler.annotation.*; import org.springframework.stereotype.*; import java.util.*; @Controller public class ChatWebSocketController { private final ConversationService service; public ChatWebSocketController(ConversationService s){service=s;} public record Chat(@NotNull SenderType senderType,@NotBlank String senderId,@NotBlank String content){} @MessageMapping("/enquiries/{id}/messages") public void send(@DestinationVariable UUID id,@Valid @Payload Chat request){service.post(id,request.senderType(),request.senderId(),request.content);} }
+package com.example.customerrouting.conversation;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
+import org.springframework.messaging.handler.annotation.*;
+import org.springframework.stereotype.*;
+import java.util.*;
+
+@Controller
+public class ChatWebSocketController {
+    private final ConversationService service;
+
+    public ChatWebSocketController(ConversationService s) {
+        service = s;
+    }
+
+    public record Chat(@NotNull SenderType senderType, @NotBlank String senderId, @NotBlank String content) {
+    }
+
+    @MessageMapping("/enquiries/{id}/messages")
+    public void send(@DestinationVariable UUID id, @Valid @Payload Chat request) {
+        service.post(id, request.senderType(), request.senderId(), request.content);
+    }
+}

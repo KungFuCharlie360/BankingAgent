@@ -1,1 +1,19 @@
-import {Navigate,Route,Routes} from 'react-router-dom'; import {Shell} from './components/layout/Shell'; import {DashboardPage} from './pages/DashboardPage'; import {CustomerPage} from './pages/CustomerPage'; import {AgentPage} from './pages/AgentPage'; import {EnquiryPage} from './pages/EnquiryPage'; export default function App(){return <Routes><Route element={<Shell/>}><Route path="/dashboard" element={<DashboardPage/>}/><Route path="/customer" element={<CustomerPage/>}/><Route path="/agent" element={<AgentPage/>}/><Route path="/enquiries/:id" element={<EnquiryPage/>}/><Route path="*" element={<Navigate to="/dashboard" replace/>}/></Route></Routes>}
+import { Navigate, Route, Routes } from "react-router-dom";
+import { Shell } from "./components/layout/Shell";
+import { DashboardPage } from "./pages/DashboardPage";
+import { CustomerPage } from "./pages/CustomerPage";
+import { AgentPage } from "./pages/AgentPage";
+import { EnquiryPage } from "./pages/EnquiryPage";
+export default function App() {
+  return (
+    <Routes>
+      <Route element={<Shell />}>
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/customer" element={<CustomerPage />} />
+        <Route path="/agent" element={<AgentPage />} />
+        <Route path="/enquiries/:id" element={<EnquiryPage />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Route>
+    </Routes>
+  );
+}

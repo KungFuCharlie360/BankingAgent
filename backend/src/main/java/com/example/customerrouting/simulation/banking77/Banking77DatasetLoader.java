@@ -1,1 +1,77 @@
-package com.example.customerrouting.simulation.banking77; import jakarta.annotation.*; import org.springframework.cache.annotation.*; import org.springframework.core.io.*; import org.springframework.stereotype.*; import java.io.*; import java.nio.charset.*; import java.util.*; @Component public class Banking77DatasetLoader { private List<Banking77Sample> samples=List.of(); @PostConstruct void load(){List<Banking77Sample>x=new ArrayList<>();for(String file:List.of("sample-data/banking77/train.csv","sample-data/banking77/test.csv")){try(InputStream in=new ClassPathResource(file).getInputStream();BufferedReader r=new BufferedReader(new InputStreamReader(in,StandardCharsets.UTF_8))){r.readLine();String line;while((line=r.readLine())!=null){int cut=line.lastIndexOf("\",\"");if(cut>1)x.add(new Banking77Sample(line.substring(1,cut).replace("\"\"","\""),line.substring(cut+3,line.length()-1)));}}catch(IOException e){throw new IllegalStateException("BANKING77 local data missing",e);}}samples=List.copyOf(x);} @Cacheable("banking77Samples") public List<Banking77Sample> samples(){return samples;} public Banking77Sample random(){return samples.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(samples.size()));} }
+package com.example.customerrouting.simulation.banking77;
+
+import jakarta.annotation.PostConstruct;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Component;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+
+@Component
+public class Banking77DatasetLoader {
+    private List<Banking77Sample> samples = List.of();
+
+    @PostConstruct
+    void load() {
+        List<Banking77Sample> loaded = new ArrayList<>();
+        for (String file : List.of("sample-data/banking77/train.csv", "sample-data/banking77/test.csv")) {
+            try (InputStream in = new ClassPathResource(file).getInputStream();
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
+                reader.readLine();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    List<String> fields = parseCsvLine(line);
+                    if (fields.size() >= 2) {
+                        loaded.add(new Banking77Sample(fields.get(0), fields.get(1)));
+                    }
+                }
+            } catch (IOException e) {
+                throw new IllegalStateException("BANKING77 local data missing", e);
+            }
+        }
+        if (loaded.isEmpty()) {
+            throw new IllegalStateException("BANKING77 local data contains no samples");
+        }
+        samples = List.copyOf(loaded);
+    }
+
+    private List<String> parseCsvLine(String line) {
+        List<String> fields = new ArrayList<>();
+        StringBuilder field = new StringBuilder();
+        boolean quoted = false;
+        for (int i = 0; i < line.length(); i++) {
+            char character = line.charAt(i);
+            if (character == '"') {
+                if (quoted && i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                    field.append('"');
+                    i++;
+                } else {
+                    quoted = !quoted;
+                }
+            } else if (character == ',' && !quoted) {
+                fields.add(field.toString());
+                field.setLength(0);
+            } else {
+                field.append(character);
+            }
+        }
+        fields.add(field.toString());
+        return fields;
+    }
+
+    @Cacheable("banking77Samples")
+    public List<Banking77Sample> samples() {
+        return samples;
+    }
+
+    public Banking77Sample random() {
+        return samples.get(ThreadLocalRandom.current().nextInt(samples.size()));
+    }
+}

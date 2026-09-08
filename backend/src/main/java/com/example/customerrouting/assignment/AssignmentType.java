@@ -1,1 +1,5 @@
-package com.example.customerrouting.assignment; public enum AssignmentType { INITIAL_ASSIGNMENT,REASSIGNMENT,UNASSIGNED }
+package com.example.customerrouting.assignment;
+
+public enum AssignmentType {
+    INITIAL_ASSIGNMENT, REASSIGNMENT, UNASSIGNED
+}

@@ -1,1 +1,71 @@
-package com.example.customerrouting.simulation; import com.example.customerrouting.enquiry.*; import com.example.customerrouting.simulation.random.*; import com.example.customerrouting.websocket.*; import jakarta.transaction.*; import org.springframework.stereotype.*; import java.time.*; import java.util.*; @Service public class SimulationCompletionService { private final SimulatedEnquiryStateRepository states; private final EnquiryService enquiries; private final HandlingTimeGenerator times; private final EventPublisher events; public SimulationCompletionService(SimulatedEnquiryStateRepository s,EnquiryService e,HandlingTimeGenerator t,EventPublisher p){states=s;enquiries=e;times=t;events=p;} @Transactional public void reconcile(UUID id){SimulatedEnquiryState s=states.findByEnquiryId(id).orElseThrow();Enquiry e=enquiries.one(id);if(e.getStatus()==EnquiryStatus.PENDING){if(s.getStatus()==SimulationStateStatus.HANDLING)s.cancel();return;} if(e.getStatus()==EnquiryStatus.CLOSED){s.completed();return;} if(e.getAssignedAgent()==null)return; if(s.getStatus()==SimulationStateStatus.HANDLING&&e.getAssignedAgent().getId().equals(s.getAgentId())&&e.getAssignedAt().equals(s.getAssignmentToken()))return;int seconds=times.seconds(e.getCategory());s.start(e.getAssignedAgent().getId(),e.getAssignedAt(),seconds);events.publish(new DomainEvent("SIMULATION_HANDLING_STARTED",id,e.getAssignedAgent().getId(),Map.of("agentName",e.getAssignedAgent().getName(),"category",e.getCategory(),"handlingDurationSeconds",seconds,"simulatedCompletionAt",s.getSimulatedCompletionAt())));} @Transactional public void completeDue(){for(SimulatedEnquiryState s:states.findByStatusAndSimulatedCompletionAtBefore(SimulationStateStatus.HANDLING,Instant.now())){Enquiry e=enquiries.one(s.getEnquiryId());if(e.getStatus()!=EnquiryStatus.CLOSED&&e.getAssignedAgent()!=null&&e.getAssignedAgent().getId().equals(s.getAgentId())&&e.getAssignedAt().equals(s.getAssignmentToken())){enquiries.close(e.getId(),"SIMULATION_COMPLETED");events.publish(new DomainEvent("SIMULATION_HANDLING_COMPLETED",e.getId(),s.getAgentId(),Map.of()));s.completed();}else s.cancel();}} public void reconcileAll(){states.findByStatus(SimulationStateStatus.WAITING_FOR_AGENT).forEach(s->reconcile(s.getEnquiryId()));states.findByStatus(SimulationStateStatus.HANDLING).forEach(s->reconcile(s.getEnquiryId()));} }
+package com.example.customerrouting.simulation;
+
+import com.example.customerrouting.enquiry.*;
+import com.example.customerrouting.simulation.random.*;
+import com.example.customerrouting.websocket.*;
+import jakarta.transaction.*;
+import org.springframework.stereotype.*;
+import java.time.*;
+import java.util.*;
+
+@Service
+public class SimulationCompletionService {
+    private final SimulatedEnquiryStateRepository states;
+    private final EnquiryService enquiries;
+    private final HandlingTimeGenerator times;
+    private final EventPublisher events;
+
+    public SimulationCompletionService(SimulatedEnquiryStateRepository s, EnquiryService e, HandlingTimeGenerator t,
+            EventPublisher p) {
+        states = s;
+        enquiries = e;
+        times = t;
+        events = p;
+    }
+
+    @Transactional
+    public void reconcile(UUID id) {
+        SimulatedEnquiryState s = states.findByEnquiryId(id).orElseThrow();
+        Enquiry e = enquiries.one(id);
+        if (e.getStatus() == EnquiryStatus.PENDING) {
+            if (s.getStatus() == SimulationStateStatus.HANDLING)
+                s.cancel();
+            return;
+        }
+        if (e.getStatus() == EnquiryStatus.CLOSED) {
+            s.completed();
+            return;
+        }
+        if (e.getAssignedAgent() == null)
+            return;
+        if (s.getStatus() == SimulationStateStatus.HANDLING && e.getAssignedAgent().getId().equals(s.getAgentId())
+                && e.getAssignedAt().equals(s.getAssignmentToken()))
+            return;
+        int seconds = times.seconds(e.getCategory());
+        s.start(e.getAssignedAgent().getId(), e.getAssignedAt(), seconds);
+        events.publish(new DomainEvent("SIMULATION_HANDLING_STARTED", id, e.getAssignedAgent().getId(),
+                Map.of("agentName", e.getAssignedAgent().getName(), "category", e.getCategory(),
+                        "handlingDurationSeconds", seconds, "simulatedCompletionAt", s.getSimulatedCompletionAt())));
+    }
+
+    @Transactional
+    public void completeDue() {
+        for (SimulatedEnquiryState s : states.findByStatusAndSimulatedCompletionAtBefore(SimulationStateStatus.HANDLING,
+                Instant.now())) {
+            Enquiry e = enquiries.one(s.getEnquiryId());
+            if (e.getStatus() != EnquiryStatus.CLOSED && e.getAssignedAgent() != null
+                    && e.getAssignedAgent().getId().equals(s.getAgentId())
+                    && e.getAssignedAt().equals(s.getAssignmentToken())) {
+                enquiries.close(e.getId(), "SIMULATION_COMPLETED");
+                events.publish(new DomainEvent("SIMULATION_HANDLING_COMPLETED", e.getId(), s.getAgentId(), Map.of()));
+                s.completed();
+            } else
+                s.cancel();
+        }
+    }
+
+    public void reconcileAll() {
+        states.findByStatus(SimulationStateStatus.WAITING_FOR_AGENT).forEach(s -> reconcile(s.getEnquiryId()));
+        states.findByStatus(SimulationStateStatus.HANDLING).forEach(s -> reconcile(s.getEnquiryId()));
+    }
+}

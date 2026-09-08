@@ -1,2 +1,142 @@
-import {useState} from 'react'; import {useNavigate} from 'react-router-dom'; import {enquiriesApi} from '../api/apis'; import type {Enquiry} from '../types/models'; const categories=['CARD_PAYMENT_DISPUTE','CARD_FRAUD','CARD_SERVICES','ATM_QUERY','ATM_DISPUTE','BANK_TRANSFER','ACCOUNT_QUERY','IDENTITY_VERIFICATION','FEES_AND_CHARGES','LOAN_QUERY','MORTGAGE_QUERY','GENERAL_BANKING'];const languages=['ENGLISH','MANDARIN','HINDI','MALAY','TAMIL'];const pretty=(value:string)=>value.replaceAll('_',' ');
-export function CustomerPage(){const nav=useNavigate();const [form,setForm]=useState({customerId:'CUST-',category:'CARD_FRAUD',preferredLanguage:'ENGLISH',message:''}),[existing,setExisting]=useState<Enquiry[]>([]),[error,setError]=useState(''),[busy,setBusy]=useState(false);async function submit(e:React.FormEvent){e.preventDefault();setBusy(true);try{const enquiry=await enquiriesApi.create(form);nav(`/enquiries/${enquiry.enquiryId}`)}catch(err){setError((err as Error).message)}finally{setBusy(false)}}async function findExisting(){if(!form.customerId.trim())return;setBusy(true);try{setExisting(await enquiriesApi.byCustomer(form.customerId.trim()));setError('')}catch(err){setError((err as Error).message)}finally{setBusy(false)}}return <section className="form-page"><h1>Customer Enquiry</h1><p>Create a new enquiry or resume an existing conversation using the customer ID.</p><form onSubmit={submit}><label>Customer ID<input required value={form.customerId} onChange={e=>setForm({...form,customerId:e.target.value})}/></label><button type="button" disabled={busy||!form.customerId.trim()} onClick={findExisting}>Find Existing Enquiries</button>{existing.length>0&&<section className="existing-enquiries"><h2>Existing enquiries</h2>{existing.map(enquiry=><button type="button" key={enquiry.enquiryId} onClick={()=>nav(`/enquiries/${enquiry.enquiryId}`)}><b>Continue {enquiry.enquiryId.slice(0,8)}</b><span>{pretty(enquiry.category)} · {enquiry.status}</span></button>)}</section>}{existing.length===0&&<p className="lookup-note">Use “Find Existing Enquiries” before creating a new ticket for a returning customer.</p>}<label>Enquiry Category<select value={form.category} onChange={e=>setForm({...form,category:e.target.value})}>{categories.map(x=><option key={x}>{x}</option>)}</select></label><label>Preferred Language<select value={form.preferredLanguage} onChange={e=>setForm({...form,preferredLanguage:e.target.value})}>{languages.map(x=><option key={x}>{x}</option>)}</select></label><label>Message<textarea required value={form.message} onChange={e=>setForm({...form,message:e.target.value})} placeholder="How can we help?"/></label>{error&&<p className="error">{error}</p>}<button disabled={busy}>{busy?'Creating…':'Create New Enquiry'}</button></form></section>}
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { enquiriesApi } from "../api/apis";
+import type { Enquiry } from "../types/models";
+const categories = [
+  "CARD_PAYMENT_DISPUTE",
+  "CARD_FRAUD",
+  "CARD_SERVICES",
+  "ATM_QUERY",
+  "ATM_DISPUTE",
+  "BANK_TRANSFER",
+  "ACCOUNT_QUERY",
+  "IDENTITY_VERIFICATION",
+  "FEES_AND_CHARGES",
+  "LOAN_QUERY",
+  "MORTGAGE_QUERY",
+  "GENERAL_BANKING",
+];
+const languages = ["ENGLISH", "MANDARIN", "HINDI", "MALAY", "TAMIL"];
+const pretty = (value: string) => value.replaceAll("_", " ");
+export function CustomerPage() {
+  const nav = useNavigate();
+  const [form, setForm] = useState({
+      customerId: "CUST-",
+      category: "CARD_FRAUD",
+      preferredLanguage: "ENGLISH",
+      message: "",
+    }),
+    [existing, setExisting] = useState<Enquiry[]>([]),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState(false);
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const enquiry = await enquiriesApi.create(form);
+      nav(`/enquiries/${enquiry.enquiryId}`);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function findExisting() {
+    if (!form.customerId.trim()) return;
+    setBusy(true);
+    try {
+      setExisting(await enquiriesApi.byCustomer(form.customerId.trim()));
+      setError("");
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <section className="form-page">
+      <h1>Customer Enquiry</h1>
+      <p>
+        Create a new enquiry or resume an existing conversation using the
+        customer ID.
+      </p>
+      <form onSubmit={submit}>
+        <label>
+          Customer ID
+          <input
+            required
+            value={form.customerId}
+            onChange={(e) => setForm({ ...form, customerId: e.target.value })}
+          />
+        </label>
+        <button
+          type="button"
+          disabled={busy || !form.customerId.trim()}
+          onClick={findExisting}
+        >
+          Find Existing Enquiries
+        </button>
+        {existing.length > 0 && (
+          <section className="existing-enquiries">
+            <h2>Existing enquiries</h2>
+            {existing.map((enquiry) => (
+              <button
+                type="button"
+                key={enquiry.enquiryId}
+                onClick={() => nav(`/enquiries/${enquiry.enquiryId}`)}
+              >
+                <b>Continue {enquiry.enquiryId.slice(0, 8)}</b>
+                <span>
+                  {pretty(enquiry.category)} · {enquiry.status}
+                </span>
+              </button>
+            ))}
+          </section>
+        )}
+        {existing.length === 0 && (
+          <p className="lookup-note">
+            Use “Find Existing Enquiries” before creating a new ticket for a
+            returning customer.
+          </p>
+        )}
+        <label>
+          Enquiry Category
+          <select
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+          >
+            {categories.map((x) => (
+              <option key={x}>{x}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Preferred Language
+          <select
+            value={form.preferredLanguage}
+            onChange={(e) =>
+              setForm({ ...form, preferredLanguage: e.target.value })
+            }
+          >
+            {languages.map((x) => (
+              <option key={x}>{x}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Message
+          <textarea
+            required
+            value={form.message}
+            onChange={(e) => setForm({ ...form, message: e.target.value })}
+            placeholder="How can we help?"
+          />
+        </label>
+        {error && <p className="error">{error}</p>}
+        <button disabled={busy}>
+          {busy ? "Creating…" : "Create New Enquiry"}
+        </button>
+      </form>
+    </section>
+  );
+}

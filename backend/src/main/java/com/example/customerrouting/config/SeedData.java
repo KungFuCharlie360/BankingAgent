@@ -1,1 +1,45 @@
-package com.example.customerrouting.config; import com.example.customerrouting.agent.*; import com.example.customerrouting.skill.*; import org.springframework.boot.*; import org.springframework.context.annotation.*; import java.util.*; @Configuration public class SeedData { @Bean CommandLineRunner seed(SkillRepository skills,AgentRepository agents){return x->{if(agents.count()>0)return;Map<String,Skill>s=new HashMap<>();for(String c:List.of("CREDIT_CARD","CARD_PAYMENT","DISPUTE","CHARGEBACK","FRAUD","MORTGAGE","LOAN","ACCOUNT","TRANSFER")){Skill q=skills.save(new Skill(c,c.replace('_',' ')));s.put(c,q);} add(agents,s,"Alice",AgentStatus.ONLINE,5,Set.of(Language.ENGLISH),"CREDIT_CARD","CARD_PAYMENT","DISPUTE","CHARGEBACK");add(agents,s,"Bob",AgentStatus.ONLINE,3,Set.of(Language.ENGLISH,Language.HINDI),"MORTGAGE","LOAN","ACCOUNT");add(agents,s,"Charlie",AgentStatus.ONLINE,4,Set.of(Language.MANDARIN,Language.ENGLISH),"FRAUD","CREDIT_CARD","DISPUTE");add(agents,s,"Divya",AgentStatus.BUSY,2,Set.of(Language.ENGLISH,Language.TAMIL),"TRANSFER","ACCOUNT");add(agents,s,"Ethan",AgentStatus.OFFLINE,2,Set.of(Language.MALAY),"CREDIT_CARD","CARD_PAYMENT","DISPUTE");add(agents,s,"Farah",AgentStatus.ONLINE,1,Set.of(Language.HINDI),"CREDIT_CARD","CARD_PAYMENT");};} private void add(AgentRepository r,Map<String,Skill>s,String n,AgentStatus st,int cap,Set<Language>l,String...codes){Set<Skill>x=new HashSet<>();for(String c:codes)x.add(s.get(c));Agent a=new Agent(n,l,x,cap);a.setStatus(st);r.save(a);} }
+package com.example.customerrouting.config;
+
+import com.example.customerrouting.agent.*;
+import com.example.customerrouting.skill.*;
+import org.springframework.boot.*;
+import org.springframework.context.annotation.*;
+import java.util.*;
+
+@Configuration
+public class SeedData {
+    @Bean
+    CommandLineRunner seed(SkillRepository skills, AgentRepository agents) {
+        return x -> {
+            if (agents.count() > 0)
+                return;
+            Map<String, Skill> s = new HashMap<>();
+            for (String c : List.of("CREDIT_CARD", "CARD_PAYMENT", "DISPUTE", "CHARGEBACK", "FRAUD", "MORTGAGE", "LOAN",
+                    "ACCOUNT", "TRANSFER")) {
+                Skill q = skills.save(new Skill(c, c.replace('_', ' ')));
+                s.put(c, q);
+            }
+            add(agents, s, "Alice", AgentStatus.ONLINE, 5, Set.of(Language.ENGLISH), "CREDIT_CARD", "CARD_PAYMENT",
+                    "DISPUTE", "CHARGEBACK");
+            add(agents, s, "Bob", AgentStatus.ONLINE, 3, Set.of(Language.ENGLISH, Language.HINDI), "MORTGAGE", "LOAN",
+                    "ACCOUNT");
+            add(agents, s, "Charlie", AgentStatus.ONLINE, 4, Set.of(Language.MANDARIN, Language.ENGLISH), "FRAUD",
+                    "CREDIT_CARD", "DISPUTE");
+            add(agents, s, "Divya", AgentStatus.BUSY, 2, Set.of(Language.ENGLISH, Language.TAMIL), "TRANSFER",
+                    "ACCOUNT");
+            add(agents, s, "Ethan", AgentStatus.OFFLINE, 2, Set.of(Language.MALAY), "CREDIT_CARD", "CARD_PAYMENT",
+                    "DISPUTE");
+            add(agents, s, "Farah", AgentStatus.ONLINE, 1, Set.of(Language.HINDI), "CREDIT_CARD", "CARD_PAYMENT");
+        };
+    }
+
+    private void add(AgentRepository r, Map<String, Skill> s, String n, AgentStatus st, int cap, Set<Language> l,
+            String... codes) {
+        Set<Skill> x = new HashSet<>();
+        for (String c : codes)
+            x.add(s.get(c));
+        Agent a = new Agent(n, l, x, cap);
+        a.setStatus(st);
+        r.save(a);
+    }
+}

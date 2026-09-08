@@ -1,1 +1,69 @@
-package com.example.customerrouting.agent; import jakarta.validation.*; import jakarta.validation.constraints.*; import org.springframework.web.bind.annotation.*; import java.time.*; import java.util.*; @RestController @RequestMapping("/api/agents") public class AgentController { private final AgentService s; public AgentController(AgentService s){this.s=s;} record Create(@NotBlank String name,@NotEmpty Set<Language> languages,@NotEmpty Set<String> skills,@Positive int maxCapacity){} record Status(@NotNull AgentStatus status){} record Capacity(@Positive int maxCapacity){} record View(UUID id,String name,AgentStatus status,Set<Language>languages,Set<String>skills,int activeEnquiryCount,int maxCapacity,double utilization,Instant lastAssignedAt,Instant lastHeartbeatAt){} private View v(Agent a){return new View(a.getId(),a.getName(),a.getStatus(),a.getLanguages(),a.getSkills().stream().map(x->x.getCode()).collect(java.util.stream.Collectors.toSet()),a.getActiveEnquiryCount(),a.getMaxCapacity(),(double)a.getActiveEnquiryCount()/a.getMaxCapacity(),a.getLastAssignedAt(),a.getLastHeartbeatAt());} @PostMapping public View create(@Valid @RequestBody Create r){return v(s.create(r.name(),r.languages(),r.skills(),r.maxCapacity()));} @GetMapping public List<View> all(){return s.all().stream().map(this::v).toList();} @GetMapping("/{id}") public View one(@PathVariable UUID id){return v(s.one(id));} @PatchMapping("/{id}/status") public View status(@PathVariable UUID id,@Valid @RequestBody Status r){return v(s.status(id,r.status()));} @PatchMapping("/{id}/capacity") public View cap(@PathVariable UUID id,@Valid @RequestBody Capacity r){return v(s.capacity(id,r.maxCapacity()));} @PostMapping("/{id}/heartbeat") public View heart(@PathVariable UUID id){return v(s.heartbeat(id));} }
+package com.example.customerrouting.agent;
+
+import jakarta.validation.*;
+import jakarta.validation.constraints.*;
+import org.springframework.web.bind.annotation.*;
+import java.time.*;
+import java.util.*;
+
+@RestController
+@RequestMapping("/api/agents")
+public class AgentController {
+    private final AgentService s;
+
+    public AgentController(AgentService s) {
+        this.s = s;
+    }
+
+    record Create(@NotBlank String name, @NotEmpty Set<Language> languages, @NotEmpty Set<String> skills,
+            @Positive int maxCapacity) {
+    }
+
+    record Status(@NotNull AgentStatus status) {
+    }
+
+    record Capacity(@Positive int maxCapacity) {
+    }
+
+    record View(UUID id, String name, AgentStatus status, Set<Language> languages, Set<String> skills,
+            int activeEnquiryCount, int maxCapacity, double utilization, Instant lastAssignedAt,
+            Instant lastHeartbeatAt) {
+    }
+
+    private View v(Agent a) {
+        return new View(a.getId(), a.getName(), a.getStatus(), a.getLanguages(),
+                a.getSkills().stream().map(x -> x.getCode()).collect(java.util.stream.Collectors.toSet()),
+                a.getActiveEnquiryCount(), a.getMaxCapacity(), (double) a.getActiveEnquiryCount() / a.getMaxCapacity(),
+                a.getLastAssignedAt(), a.getLastHeartbeatAt());
+    }
+
+    @PostMapping
+    public View create(@Valid @RequestBody Create r) {
+        return v(s.create(r.name(), r.languages(), r.skills(), r.maxCapacity()));
+    }
+
+    @GetMapping
+    public List<View> all() {
+        return s.all().stream().map(this::v).toList();
+    }
+
+    @GetMapping("/{id}")
+    public View one(@PathVariable UUID id) {
+        return v(s.one(id));
+    }
+
+    @PatchMapping("/{id}/status")
+    public View status(@PathVariable UUID id, @Valid @RequestBody Status r) {
+        return v(s.status(id, r.status()));
+    }
+
+    @PatchMapping("/{id}/capacity")
+    public View cap(@PathVariable UUID id, @Valid @RequestBody Capacity r) {
+        return v(s.capacity(id, r.maxCapacity()));
+    }
+
+    @PostMapping("/{id}/heartbeat")
+    public View heart(@PathVariable UUID id) {
+        return v(s.heartbeat(id));
+    }
+}

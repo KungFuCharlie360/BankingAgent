@@ -1,1 +1,18 @@
-package com.example.customerrouting.config; import org.springframework.context.annotation.*; import org.springframework.scheduling.*; import org.springframework.scheduling.concurrent.*; @Configuration public class SchedulingConfig { @Bean(name="simulationTaskScheduler") @Primary TaskScheduler simulationTaskScheduler(){ThreadPoolTaskScheduler x=new ThreadPoolTaskScheduler();x.setPoolSize(2);x.setThreadNamePrefix("simulation-");x.initialize();return x;} }
+package com.example.customerrouting.config;
+
+import org.springframework.context.annotation.*;
+import org.springframework.scheduling.*;
+import org.springframework.scheduling.concurrent.*;
+
+@Configuration
+public class SchedulingConfig {
+    @Bean(name = "simulationTaskScheduler")
+    @Primary
+    TaskScheduler simulationTaskScheduler() {
+        ThreadPoolTaskScheduler x = new ThreadPoolTaskScheduler();
+        x.setPoolSize(2);
+        x.setThreadNamePrefix("simulation-");
+        x.initialize();
+        return x;
+    }
+}

@@ -1,2 +1,43 @@
-import {useCallback,useEffect,useState} from 'react'; import {useParams} from 'react-router-dom'; import {enquiriesApi} from '../api/apis'; import type {Enquiry} from '../types/models'; import {Chat} from '../components/enquiries/Chat'; import {useSubscription} from '../websocket/useSubscription';
-export function EnquiryPage(){const {id=''}=useParams();const [enquiry,setEnquiry]=useState<Enquiry>(),[error,setError]=useState('');const load=useCallback(()=>enquiriesApi.one(id).then(setEnquiry).catch(e=>setError(e.message)),[id]);useEffect(()=>{load()},[load]);const onEvent=useCallback(()=>load(),[load]);useSubscription(id?`/topic/enquiries/${id}`:undefined,onEvent);if(error)return <p className="error">{error}</p>;if(!enquiry)return <p>Loading enquiry…</p>;return <section className="form-page"><h1>Enquiry {id.slice(0,8)}</h1><p className="connection-note">{enquiry.status==='PENDING'?'Connecting to an agent…':enquiry.assignedAgent?`Connected to ${enquiry.assignedAgent.name}`:`Status: ${enquiry.status}`}</p><Chat enquiryId={id} senderType="CUSTOMER" senderId={enquiry.customerId}/></section>}
+import { useCallback, useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { enquiriesApi } from "../api/apis";
+import type { Enquiry } from "../types/models";
+import { Chat } from "../components/enquiries/Chat";
+import { useSubscription } from "../websocket/useSubscription";
+export function EnquiryPage() {
+  const { id = "" } = useParams();
+  const [enquiry, setEnquiry] = useState<Enquiry>(),
+    [error, setError] = useState("");
+  const load = useCallback(
+    () =>
+      enquiriesApi
+        .one(id)
+        .then(setEnquiry)
+        .catch((e) => setError(e.message)),
+    [id],
+  );
+  useEffect(() => {
+    load();
+  }, [load]);
+  const onEvent = useCallback(() => load(), [load]);
+  useSubscription(id ? `/topic/enquiries/${id}` : undefined, onEvent);
+  if (error) return <p className="error">{error}</p>;
+  if (!enquiry) return <p>Loading enquiry…</p>;
+  return (
+    <section className="form-page">
+      <h1>Enquiry {id.slice(0, 8)}</h1>
+      <p className="connection-note">
+        {enquiry.status === "PENDING"
+          ? "Connecting to an agent…"
+          : enquiry.assignedAgent
+            ? `Connected to ${enquiry.assignedAgent.name}`
+            : `Status: ${enquiry.status}`}
+      </p>
+      <Chat
+        enquiryId={id}
+        senderType="CUSTOMER"
+        senderId={enquiry.customerId}
+      />
+    </section>
+  );
+}

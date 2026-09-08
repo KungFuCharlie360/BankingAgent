@@ -1,2 +1,145 @@
-import {useCallback,useEffect,useState} from 'react'; import {agentsApi,enquiriesApi,knowledgeApi} from '../api/apis'; import type {Agent,Enquiry,KnowledgeSuggestion} from '../types/models'; import {Chat} from '../components/enquiries/Chat'; import {useSubscription} from '../websocket/useSubscription'; const pretty=(x:string)=>x.replaceAll('_',' ');
-export function AgentPage(){const [agents,setAgents]=useState<Agent[]>([]),[selected,setSelected]=useState(''),[enquiries,setEnquiries]=useState<Enquiry[]>([]),[open,setOpen]=useState<Enquiry>(),[knowledge,setKnowledge]=useState<KnowledgeSuggestion[]>([]),[error,setError]=useState('');const agent=agents.find(a=>a.id===selected);const load=useCallback(async()=>{try{const all=await agentsApi.all();setAgents(all);if(!selected&&all[0])setSelected(all[0].id);if(selected)setEnquiries((await enquiriesApi.all()).filter(e=>e.assignedAgent?.id===selected&&e.status!=='CLOSED'))}catch(e){setError((e as Error).message)}},[selected]);useEffect(()=>{load()},[load]);useEffect(()=>{if(open)knowledgeApi.forEnquiry(open.enquiryId).then(setKnowledge).catch(e=>setError(e.message));else setKnowledge([])},[open]);const onAssignment=useCallback(()=>load(),[load]);useSubscription(selected?`/topic/agents/${selected}/assignments`:undefined,onAssignment);async function status(status:Agent['status']){try{await agentsApi.status(selected,status);load()}catch(e){setError((e as Error).message)}}async function close(){if(!open)return;try{await enquiriesApi.close(open.enquiryId);setOpen(undefined);load()}catch(e){setError((e as Error).message)}}return <section><h1>Agent Console</h1>{error&&<p className="error">{error}</p>}<label className="acting">Acting as:<select value={selected} onChange={e=>{setSelected(e.target.value);setOpen(undefined)}}>{agents.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select></label>{agent&&<div className="agent-overview"><span className={`badge ${agent.status.toLowerCase()}`}>{agent.status}</span><b>Capacity {agent.activeEnquiryCount}/{agent.maxCapacity}</b><span>{agent.languages.map(pretty).join(' · ')}</span><span>{agent.skills.map(pretty).join(' · ')}</span><div>{(['ONLINE','BUSY','OFFLINE'] as Agent['status'][]).map(x=><button key={x} onClick={()=>status(x)}>{x}</button>)}</div></div>}<div className="agent-console"><section className="panel"><h2>Assigned enquiries</h2>{enquiries.map(e=><button className="assignment" onClick={()=>setOpen(e)} key={e.enquiryId}><b>{e.enquiryId.slice(0,8)}</b><span>{pretty(e.category)} · {e.customerId}</span></button>)}{!enquiries.length&&<p>No assigned enquiries.</p>}</section>{open&&agent&&<div><button className="danger" onClick={close}>Close Enquiry</button><Chat enquiryId={open.enquiryId} senderType="AGENT" senderId={agent.id}/><aside className="panel"><h2>Suggested Knowledge</h2>{knowledge.map(k=><article key={k.id}><b>{k.question}</b><p>{k.answer}</p></article>)}{!knowledge.length&&<p>No recommendations available.</p>}</aside></div>}</div></section>}
+import { useCallback, useEffect, useState } from "react";
+import { agentsApi, enquiriesApi, knowledgeApi } from "../api/apis";
+import type { Agent, Enquiry, KnowledgeSuggestion } from "../types/models";
+import { Chat } from "../components/enquiries/Chat";
+import { useSubscription } from "../websocket/useSubscription";
+const pretty = (x: string) => x.replaceAll("_", " ");
+export function AgentPage() {
+  const [agents, setAgents] = useState<Agent[]>([]),
+    [selected, setSelected] = useState(""),
+    [enquiries, setEnquiries] = useState<Enquiry[]>([]),
+    [open, setOpen] = useState<Enquiry>(),
+    [knowledge, setKnowledge] = useState<KnowledgeSuggestion[]>([]),
+    [error, setError] = useState("");
+  const agent = agents.find((a) => a.id === selected);
+  const load = useCallback(async () => {
+    try {
+      const all = await agentsApi.all();
+      setAgents(all);
+      if (!selected && all[0]) setSelected(all[0].id);
+      if (selected)
+        setEnquiries(
+          (await enquiriesApi.all()).filter(
+            (e) => e.assignedAgent?.id === selected && e.status !== "CLOSED",
+          ),
+        );
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }, [selected]);
+  useEffect(() => {
+    load();
+  }, [load]);
+  useEffect(() => {
+    if (open)
+      knowledgeApi
+        .forEnquiry(open.enquiryId)
+        .then(setKnowledge)
+        .catch((e) => setError(e.message));
+    else setKnowledge([]);
+  }, [open]);
+  const onAssignment = useCallback(() => load(), [load]);
+  useSubscription(
+    selected ? `/topic/agents/${selected}/assignments` : undefined,
+    onAssignment,
+  );
+  async function status(status: Agent["status"]) {
+    try {
+      await agentsApi.status(selected, status);
+      load();
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+  async function close() {
+    if (!open) return;
+    try {
+      await enquiriesApi.close(open.enquiryId);
+      setOpen(undefined);
+      load();
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+  return (
+    <section>
+      <h1>Agent Console</h1>
+      {error && <p className="error">{error}</p>}
+      <label className="acting">
+        Acting as:
+        <select
+          value={selected}
+          onChange={(e) => {
+            setSelected(e.target.value);
+            setOpen(undefined);
+          }}
+        >
+          {agents.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      {agent && (
+        <div className="agent-overview">
+          <span className={`badge ${agent.status.toLowerCase()}`}>
+            {agent.status}
+          </span>
+          <b>
+            Capacity {agent.activeEnquiryCount}/{agent.maxCapacity}
+          </b>
+          <span>{agent.languages.map(pretty).join(" · ")}</span>
+          <span>{agent.skills.map(pretty).join(" · ")}</span>
+          <div>
+            {(["ONLINE", "BUSY", "OFFLINE"] as Agent["status"][]).map((x) => (
+              <button key={x} onClick={() => status(x)}>
+                {x}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <div className="agent-console">
+        <section className="panel">
+          <h2>Assigned enquiries</h2>
+          {enquiries.map((e) => (
+            <button
+              className="assignment"
+              onClick={() => setOpen(e)}
+              key={e.enquiryId}
+            >
+              <b>{e.enquiryId.slice(0, 8)}</b>
+              <span>
+                {pretty(e.category)} · {e.customerId}
+              </span>
+            </button>
+          ))}
+          {!enquiries.length && <p>No assigned enquiries.</p>}
+        </section>
+        {open && agent && (
+          <div>
+            <button className="danger" onClick={close}>
+              Close Enquiry
+            </button>
+            <Chat
+              enquiryId={open.enquiryId}
+              senderType="AGENT"
+              senderId={agent.id}
+            />
+            <aside className="panel">
+              <h2>Suggested Knowledge</h2>
+              {knowledge.map((k) => (
+                <article key={k.id}>
+                  <b>{k.question}</b>
+                  <p>{k.answer}</p>
+                </article>
+              ))}
+              {!knowledge.length && <p>No recommendations available.</p>}
+            </aside>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}

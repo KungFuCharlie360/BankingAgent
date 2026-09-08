@@ -1,2 +1,108 @@
-package com.example.customerrouting.enquiry; import com.example.customerrouting.agent.*; import jakarta.persistence.*; import java.time.*; import java.util.*;
-@Entity @Table(name="enquiries") public class Enquiry { @Id private UUID id=UUID.randomUUID(); @Column(nullable=false) private String customerId; @Enumerated(EnumType.STRING) private EnquiryCategory category; @Enumerated(EnumType.STRING) private Language preferredLanguage; @Enumerated(EnumType.STRING) private EnquiryStatus status=EnquiryStatus.PENDING; @Enumerated(EnumType.STRING) private EnquirySource source=EnquirySource.MANUAL; @ManyToOne(fetch=FetchType.LAZY) private Agent assignedAgent; private Instant createdAt=Instant.now(),assignedAt,lastCustomerActivityAt=Instant.now(),closedAt; @Version private Long version; protected Enquiry(){} public Enquiry(String c,EnquiryCategory cat,Language lang){customerId=c;category=cat;preferredLanguage=lang;} public UUID getId(){return id;} public String getCustomerId(){return customerId;} public EnquirySource getSource(){return source;} public void setSource(EnquirySource s){source=s;} public EnquiryCategory getCategory(){return category;} public Language getPreferredLanguage(){return preferredLanguage;} public EnquiryStatus getStatus(){return status;} public Agent getAssignedAgent(){return assignedAgent;} public Instant getCreatedAt(){return createdAt;} public Instant getAssignedAt(){return assignedAt;} public Instant getLastCustomerActivityAt(){return lastCustomerActivityAt;} public Instant getClosedAt(){return closedAt;} public void assign(Agent a){assignedAgent=a;status=EnquiryStatus.ASSIGNED;assignedAt=Instant.now();} public void pending(){assignedAgent=null;status=EnquiryStatus.PENDING;} public boolean close(){if(status==EnquiryStatus.CLOSED)return false;status=EnquiryStatus.CLOSED;closedAt=Instant.now();return true;} public void customerActivity(){lastCustomerActivityAt=Instant.now();} }
+package com.example.customerrouting.enquiry;
+
+import com.example.customerrouting.agent.*;
+import jakarta.persistence.*;
+import java.time.*;
+import java.util.*;
+
+@Entity
+@Table(name = "enquiries")
+public class Enquiry {
+    @Id
+    private UUID id = UUID.randomUUID();
+    @Column(nullable = false)
+    private String customerId;
+    @Enumerated(EnumType.STRING)
+    private EnquiryCategory category;
+    @Enumerated(EnumType.STRING)
+    private Language preferredLanguage;
+    @Enumerated(EnumType.STRING)
+    private EnquiryStatus status = EnquiryStatus.PENDING;
+    @Enumerated(EnumType.STRING)
+    private EnquirySource source = EnquirySource.MANUAL;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Agent assignedAgent;
+    private Instant createdAt = Instant.now(), assignedAt, lastCustomerActivityAt = Instant.now(), closedAt;
+    @Version
+    private Long version;
+
+    protected Enquiry() {
+    }
+
+    public Enquiry(String c, EnquiryCategory cat, Language lang) {
+        customerId = c;
+        category = cat;
+        preferredLanguage = lang;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public String getCustomerId() {
+        return customerId;
+    }
+
+    public EnquirySource getSource() {
+        return source;
+    }
+
+    public void setSource(EnquirySource s) {
+        source = s;
+    }
+
+    public EnquiryCategory getCategory() {
+        return category;
+    }
+
+    public Language getPreferredLanguage() {
+        return preferredLanguage;
+    }
+
+    public EnquiryStatus getStatus() {
+        return status;
+    }
+
+    public Agent getAssignedAgent() {
+        return assignedAgent;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public Instant getAssignedAt() {
+        return assignedAt;
+    }
+
+    public Instant getLastCustomerActivityAt() {
+        return lastCustomerActivityAt;
+    }
+
+    public Instant getClosedAt() {
+        return closedAt;
+    }
+
+    public void assign(Agent a) {
+        assignedAgent = a;
+        status = EnquiryStatus.ASSIGNED;
+        assignedAt = Instant.now();
+    }
+
+    public void pending() {
+        assignedAgent = null;
+        status = EnquiryStatus.PENDING;
+    }
+
+    public boolean close() {
+        if (status == EnquiryStatus.CLOSED)
+            return false;
+        status = EnquiryStatus.CLOSED;
+        closedAt = Instant.now();
+        return true;
+    }
+
+    public void customerActivity() {
+        lastCustomerActivityAt = Instant.now();
+    }
+}

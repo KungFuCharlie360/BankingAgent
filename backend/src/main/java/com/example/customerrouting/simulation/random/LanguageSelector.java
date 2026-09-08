@@ -1,1 +1,14 @@
-package com.example.customerrouting.simulation.random; import com.example.customerrouting.agent.*; import org.springframework.stereotype.*; import java.util.concurrent.*; @Component public class LanguageSelector { public Language next(){int n=ThreadLocalRandom.current().nextInt(100);return n<60?Language.ENGLISH:n<75?Language.MANDARIN:n<85?Language.HINDI:n<95?Language.MALAY:Language.TAMIL;} }
+package com.example.customerrouting.simulation.random;
+
+import com.example.customerrouting.agent.*;
+import org.springframework.stereotype.*;
+import java.util.concurrent.*;
+
+@Component
+public class LanguageSelector {
+    public Language next() {
+        int n = ThreadLocalRandom.current().nextInt(100);
+        return n < 60 ? Language.ENGLISH
+                : n < 75 ? Language.MANDARIN : n < 85 ? Language.HINDI : n < 95 ? Language.MALAY : Language.TAMIL;
+    }
+}
