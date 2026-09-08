@@ -30,6 +30,32 @@ Open `http://localhost:5173`. Swagger UI remains at `http://localhost:8080/swagg
 
 The frontend uses `VITE_API_BASE_URL` (default `http://localhost:8080`) for REST and `VITE_WS_URL` (default `http://localhost:8080/ws`) for STOMP. Backend CORS permits `http://localhost:5173` by default; override it with `FRONTEND_ORIGIN`.
 
+## Single-EC2 deployment
+
+The included `docker-compose.yml` is a low-cost personal-project deployment: PostgreSQL, Spring Boot, and an Nginx-served frontend run on one host. Nginx proxies `/api` and `/ws` to the backend, so production builds use same-origin requests and do not need public backend or database ports.
+
+1. Copy the example environment file and replace the password and host:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Build and start the stack:
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+3. Verify it locally or on the EC2 host:
+
+   ```bash
+   curl -f http://localhost/actuator/health
+   ```
+
+Only expose HTTP port `80` from the host. PostgreSQL and Spring Boot are internal Docker services. The `postgres-data` named volume persists database data across container restarts. The production profile uses PostgreSQL and `ddl-auto: update`; before treating the deployment as production-grade, replace that setting with versioned migrations such as Flyway.
+
+For an EC2 deployment, use an Ubuntu instance, attach an Elastic IP, allow inbound `80` (and later `443`) from the internet, and limit SSH (`22`) to your own IP. Do not expose `5432` or `8080`.
+
 ## User workflows
 
 - **Routing Dashboard** (`/dashboard`) loads agents and enquiry state from REST, then uses `/topic/routing` for live updates. It includes simulator controls, capacity timers, pending FIFO queue, and a bounded routing feed.
