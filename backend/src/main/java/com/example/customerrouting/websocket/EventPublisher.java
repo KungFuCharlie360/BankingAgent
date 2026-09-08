@@ -1,0 +1,1 @@
+package com.example.customerrouting.websocket; import org.springframework.context.*; import org.springframework.stereotype.*; @Component public class EventPublisher { private final ApplicationEventPublisher p; public EventPublisher(ApplicationEventPublisher p){this.p=p;} public void publish(DomainEvent e){p.publishEvent(e);} }

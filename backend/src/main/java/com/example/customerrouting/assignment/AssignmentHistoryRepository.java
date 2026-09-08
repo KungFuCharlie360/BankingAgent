@@ -1,0 +1,1 @@
+package com.example.customerrouting.assignment; import org.springframework.data.jpa.repository.JpaRepository; import java.util.*; public interface AssignmentHistoryRepository extends JpaRepository<AssignmentHistory,UUID>{void deleteByEnquiryIdIn(Collection<UUID> ids);}

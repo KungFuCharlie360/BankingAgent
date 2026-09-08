@@ -1,0 +1,23 @@
+spring:
+  datasource: { url: jdbc:h2:mem:routing;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE, username: sa, password: '' }
+  jpa: { hibernate: { ddl-auto: create-drop }, open-in-view: false }
+  h2.console: { enabled: true, path: /h2-console }
+  cache: { type: simple }
+app:
+  cors:
+    allowed-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
+routing:
+  pending-retry-ms: 5000
+  inactivity-minutes: 30
+  offline-minutes: 10
+simulation:
+  enabled: true
+  traffic: { enabled: false, min-arrival-interval-ms: 500, max-arrival-interval-ms: 3000 }
+  handling-times:
+    CARD_SERVICES: { min-seconds: 10, max-seconds: 25 }
+    ACCOUNT_QUERY: { min-seconds: 10, max-seconds: 30 }
+    BANK_TRANSFER: { min-seconds: 20, max-seconds: 45 }
+    CARD_PAYMENT_DISPUTE: { min-seconds: 30, max-seconds: 60 }
+    ATM_DISPUTE: { min-seconds: 30, max-seconds: 60 }
+    CARD_FRAUD: { min-seconds: 40, max-seconds: 75 }
+    DEFAULT: { min-seconds: 10, max-seconds: 60 }

@@ -1,0 +1,1 @@
+package com.example.customerrouting.routing; import org.springframework.web.bind.annotation.*; @RestController @RequestMapping("/api/routing") public class RoutingController { private final PendingEnquiryService p; public RoutingController(PendingEnquiryService p){this.p=p;} @PostMapping("/retry-pending") public void retry(){p.retry();} }
