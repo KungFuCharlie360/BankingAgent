@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -22,7 +24,7 @@ public class Banking77DatasetLoader {
     void load() {
         List<Banking77Sample> loaded = new ArrayList<>();
         for (String file : List.of("sample-data/banking77/train.csv", "sample-data/banking77/test.csv")) {
-            try (InputStream in = new ClassPathResource(file).getInputStream();
+      try (InputStream in = openDataset(file);
                     BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
                 reader.readLine();
                 String line;
@@ -30,7 +32,8 @@ public class Banking77DatasetLoader {
                     List<String> fields = parseCsvLine(line);
                     if (fields.size() >= 2) {
                         loaded.add(new Banking77Sample(fields.get(0), fields.get(1)));
-                    }
+  }
+
                 }
             } catch (IOException e) {
                 throw new IllegalStateException("BANKING77 local data missing", e);
@@ -40,6 +43,20 @@ public class Banking77DatasetLoader {
             throw new IllegalStateException("BANKING77 local data contains no samples");
         }
         samples = List.copyOf(loaded);
+    }
+
+    private InputStream openDataset(String file) throws IOException {
+        ClassPathResource resource = new ClassPathResource(file);
+        if (resource.exists()) {
+            return resource.getInputStream();
+        }
+        for (Path sourceRoot : List.of(Path.of("src/main/resources"), Path.of("backend/src/main/resources"))) {
+            Path sourceFile = sourceRoot.resolve(file);
+            if (Files.isRegularFile(sourceFile)) {
+                return Files.newInputStream(sourceFile);
+            }
+        }
+        throw new IOException("Dataset resource not found: " + file);
     }
 
     private List<String> parseCsvLine(String line) {
